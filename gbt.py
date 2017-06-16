@@ -97,6 +97,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 
 # prepare dict of params for xgboost to run with
 param = {
+    #"n_estimators" : 1000
     #"learning_rate":0.001,
     # "loss" : "huber",
     # "max_depth": 3,
