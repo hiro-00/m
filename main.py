@@ -7,7 +7,10 @@ from sklearn.cross_validation import KFold
 from sklearn.metrics import mean_squared_error, r2_score
 import pickle
 
+from sklearn.tree import DecisionTreeRegressor as DTC
 import matplotlib.pyplot as plt
+from sklearn.tree import export_graphviz
+from sklearn import tree
 
 # read datasets
 train = pd.read_csv('data/train.csv')
@@ -112,7 +115,8 @@ if True:
         test.drop(c,axis=1)
 
 
-
+train = train.drop(['ID'], axis=1)
+test = test.drop(['ID'], axis=1)
 y_train = train["y"]
 y_mean = np.mean(y_train)
 
@@ -196,7 +200,7 @@ train = train.drop(["y"], axis=1)
 num_boost_rounds = 1350
 def cv():
     cv_num = 1
-    nfolds = 2
+    nfolds = 10
     score = 0
     fig_x=[]
     fig_y=[]
@@ -229,11 +233,9 @@ def cv():
         plt.ylim([0, 200])
         plt.show()
         print(score / (cv_num * nfolds) )
-        pred = np.array(fig_x)
 
-    if False:
-        train['pred'] = np.array(fig_x)
-
+    train['pred'] = np.array(fig_x)
+    if True:
         with open('pred.dump', 'wb') as f:
             pickle.dump(train, f)
 
@@ -241,7 +243,6 @@ def cv():
 def show_tree():
     with open('pred.dump', 'rb') as f:
         train = pickle.load(f)
-    from sklearn.tree import DecisionTreeRegressor as DTC
     thresh = [85, 100, 108]
     row_select=[
         train.pred < thresh[0],
@@ -250,14 +251,14 @@ def show_tree():
         train.pred >= thresh[2]
     ]
 
-    from sklearn.tree import export_graphviz
-    from sklearn import tree
     for i, rows in enumerate(row_select):
         train_rows = train[rows]
-        model = DTC(max_depth=5, min_samples_split=int(train_rows.values.shape[0]/10))
+        model = DTC(max_depth=5, min_samples_split=int(train_rows.values.shape[0]/7))
+        print(train_rows.values.shape)
         model.fit(train_rows.values, y_train[rows].values)
-        tree.export_graphviz(model, out_file=str(i)+'tree.dot')
+        tree.export_graphviz(model, feature_names=train.columns,out_file="tree/" + "xgb" +str(i)+'tree.dot')
         parse_tree(model, train_rows.values.shape[0], str(i))
+        print("")
 
 def parse_tree(estimator, total_node, class_name):
     import collections
